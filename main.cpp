@@ -7,6 +7,17 @@
 
 //scp -r C:\Users\chen\CLionProjects\Websocket root@127.0.0.1:\home\chen\Experiment\
 
+int processRequest(char *request){
+    cJSON *data =cJSON_Parse(request);
+    if (!data){
+        printf("Error before:[%s]\n",cJSON_GetErrorPtr());
+    }else {
+        printf("%s\n\n", cJSON_Print(data));
+        return 0;
+    }
+    return -1;
+}
+
 int passive_server(int port, int queue) {
     ///定义sockfd
     int server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -248,26 +259,26 @@ int main() {
         perror("epll_ctl:servaddr register failed\n");
         exit(EXIT_FAILURE);
     }
-    printf("listen:%d\n",listen_fd);
+    printf("listen:%d\n", listen_fd);
     int nfds;
     while (true) {
         nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, 10);
-	if(nfds!=0)
-		printf("\nnfds:%d\n",nfds);
-	if (nfds == -1) {
+        if (nfds != 0)
+            printf("\nnfds:%d\n", nfds);
+        if (nfds == -1) {
             perror("start epoll_wait failed\n");
             continue;
         }
         for (int i = 0; i < nfds; ++i) {
             if (events[i].data.fd == listen_fd) {
-                if((connFd = accept(listen_fd, (struct sockaddr *) &client_addr, &addr_length))<0){
+                if ((connFd = accept(listen_fd, (struct sockaddr *) &client_addr, &addr_length)) < 0) {
                     perror("accept conn_fd failed");
                     exit(EXIT_FAILURE);
                 }
-		    printf("accept:%d\n",connFd);
+                printf("accept:%d\n", connFd);
                 shakehands(connFd);
 
-		    printf("shakerhands\n");
+                printf("shakerhands\n");
                 //frame_head head;
                 //int rul = recv_frame_head(connFd, &head);
                 //if (rul < 0)
@@ -277,19 +288,19 @@ int main() {
                 //echo head
                 //send_frame_head(connFd, &head);
 
-                    event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
+                event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
                 event.data.fd = connFd;//将connFd设置为要读取的文件描述符
                 //event.data.ptr = &head;
                 if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, connFd, &event) == -1) {
                     perror("epoll_ctl:conn_fd register failed");
                     exit(EXIT_FAILURE);
                 }
-            } else{
-		    frame_head head;
-		    int rul = recv_frame_head(events[i].data.fd,&head);
-		    if (rul<0)
-			    break;
-		    send_frame_head(events[i].data.fd,&head);
+            } else {
+                frame_head head;
+                int rul = recv_frame_head(events[i].data.fd, &head);
+                if (rul < 0)
+                    break;
+                send_frame_head(events[i].data.fd, &head);
                 //read payload data
                 char payload_data[1024] = {0};
                 int size = 0;
@@ -298,20 +309,21 @@ int main() {
                     rul = read(events[i].data.fd, payload_data, 1024);
                     if (rul <= 0)
                         break;
-		    else if (head.opcode== 0x8){
-			    printf("socket %d close\n",events[i].data.fd,payload_data,1024);
-			    close(events[i].data.fd);
-			    break;
-		    }
-		    size += rul;
+                    else if (head.opcode == 0x8) {
+                        printf("socket %d close\n", events[i].data.fd, payload_data, 1024);
+                        close(events[i].data.fd);
+                        break;
+                    }
+                    size += rul;
 
                     umask(payload_data, size, head.masking_key);
-                    printf("%d recive:%s\n",events[i].data.fd, payload_data);
+                    printf("%d recive:%s\n", events[i].data.fd, payload_data);
 
-                    //echo data
-                    if (write(events[i].data.fd, payload_data, rul) <= 0)
-                        break;
+//                    //echo data
+//                    if (write(events[i].data.fd, payload_data, rul) <= 0)
+//                        break;
                 } while (size < head.payload_length);
+                processRequest(payload_data);
                 printf("\n-----------\n");
             }
 
@@ -319,54 +331,3 @@ int main() {
     }
 }
 
-/*
-int main()
-{
-    int ser_fd = passive_server(8008,20);
-
-
-    struct sockaddr_in client_addr;
-    socklen_t addr_length = sizeof(client_addr);
-    int conn = accept(ser_fd,(struct sockaddr*)&client_addr, &addr_length);
-	printf("1,%d\n",conn);
-    shakehands(conn);
-	printf("2\n");
-
-    while (1)
-    {
-        frame_head head;
-	printf("3\n");
-        int rul = recv_frame_head(conn,&head);
-        if (rul < 0)
-            break;
-//        printf("fin=%d\nopcode=0x%X\nmask=%d\npayload_len=%llu\n",head.fin,head.opcode,head.mask,head.payload_length);
-
-        //echo head
-	printf("4\n");
-        send_frame_head(conn,&head);
-        //read payload data
-	printf("5\n");
-        char payload_data[1024] = {0};
-        int size = 0;
-        do {
-            int rul;
-	    printf("6\n");
-            rul = read(conn,payload_data,1024);
-            if (rul<=0)
-                break;
-            size+=rul;
-
-            umask(payload_data,size,head.masking_key);
-            printf("recive:%s",payload_data);
-
-            //echo data
-            if (write(conn,payload_data,rul)<=0)
-                break;
-        }while(size<head.payload_length);
-        printf("\n-----------\n");
-
-    }
-
-    close(conn);
-    close(ser_fd);
-}*/

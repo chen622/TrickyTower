@@ -3,4 +3,4 @@ project(TrickyTowerServer)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(Websocket main.cpp server.h)
+add_executable(Websocket main.cpp server.h room.cpp room.h)
