@@ -23,8 +23,8 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
         switch (function) {
             case 1: {//创建房间
                 printf("sockcet:%d\n", event.data.fd);
-                char name[20];
-                strcpy(name, "撕逼小组");
+                char *name;
+                strcpy(name, "abcd");
                 room new_room(name, event.data.fd);
                 printf("1\n");
                 mapRoom[roomId] = new_room;
