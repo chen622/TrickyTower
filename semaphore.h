@@ -7,6 +7,11 @@
 #ifndef __SEMAPHORE_H__
 #define __SEMAPHORE_H__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/sem.h>
+
 
 union semun
 {
