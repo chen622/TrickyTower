@@ -67,3 +67,5 @@ int room::getConnectAmount() const {
 void room::setConnectAmount(int connectAmount) {
     room::connectAmount = connectAmount;
 }
+
+room::room() {}

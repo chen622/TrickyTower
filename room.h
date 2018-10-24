@@ -41,6 +41,8 @@ public:
 
     int addPlayer(int player);
 
+    room();
+
     room(int id, char *name,int host);
 };
 

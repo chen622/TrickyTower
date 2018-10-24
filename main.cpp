@@ -1,19 +1,39 @@
 #include "server.h"
+#include "room.h"
 #include <openssl/sha.h>
 #include <openssl/pem.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <cjson/cJSON.h>
 
+using namespace std;
+
+map<int, room *> mapRoom;
+int roomId = 60;
 
 //scp -r C:\Users\chen\CLionProjects\Websocket root@127.0.0.1:\home\chen\Experiment\
 
-int processRequest(char *request){
-    cJSON *data =cJSON_Parse(request);
-    if (!data){
-        printf("Error before:[%s]\n",cJSON_GetErrorPtr());
-    }else {
-        printf("%s\n\n", cJSON_Print(data));
+int processRequest(char *request, struct epoll_event *event) {
+    cJSON *data = cJSON_Parse(request);
+    cJSON *response = cJSON_CreateObject();
+    if (!data) {
+        printf("Error before:[%s]\n", cJSON_GetErrorPtr());
+    } else {
+        int function = cJSON_GetObjectItem(data, "function")->valueint;
+        switch (function)
+            case 1: {
+                int seg_id = shmget(roomId, 0, IPC_CREAT | 0777);
+                room *newRoom = new room(seg_id, "撕逼小组", event->data.fd);
+                newRoom = (room *) shmat(seg_id, NULL, 0);
+                mapRoom[seg_id] = newRoom;
+                event->data.ptr = newRoom;
+                cJSON_AddNumberToObject(response, "function", 1);
+                cJSON_AddNumberToObject(response, "roomId", seg_id);
+                write(event->data.fd, cJSON_PrintUnformatted(data),1024);
+                roomId++;
+                return roomId;
+            }
+
         return 0;
     }
     return -1;
@@ -299,10 +319,10 @@ int main() {
             } else {
                 frame_head head;
                 int rul = recv_frame_head(events[i].data.fd, &head);
-		if (rul < 0){
+                if (rul < 0) {
                     close(events[i].data.fd);
-			break;
-		}
+                    break;
+                }
                 send_frame_head(events[i].data.fd, &head);
                 //read payload data
                 char payload_data[1024] = {0};
@@ -324,7 +344,7 @@ int main() {
                     printf("socket %d close\n", events[i].data.fd, payload_data, 1024);
                     close(events[i].data.fd);
                 }
-                processRequest(payload_data);
+                processRequest(payload_data, &events[i]);
                 printf("\n-----------\n");
 
             }

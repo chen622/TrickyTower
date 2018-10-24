@@ -14,6 +14,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/epoll.h>
+#include <map>
+#include <sys/shm.h>
+#include <sys/ipc.h>
 /*在握手时需要进行sha1编码和base64编码，
 在这里用openssl的库来实现*/
 
