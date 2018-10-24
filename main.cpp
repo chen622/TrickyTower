@@ -208,19 +208,19 @@ int send_frame_head(int fd, frame_head *head) {
     int head_length = 0;
     if (head->payload_length < 126) {
         response_head = (char *) malloc(2);
-        response_head[0] = 0x81;
+        response_head[0] = 0x82;
         response_head[1] = head->payload_length;
         head_length = 2;
     } else if (head->payload_length < 0xFFFF) {
         response_head = (char *) malloc(4);
-        response_head[0] = 0x81;
+        response_head[0] = 0x82;
         response_head[1] = 126;
         response_head[2] = (head->payload_length >> 8 & 0xFF);
         response_head[3] = (head->payload_length & 0xFF);
         head_length = 4;
     } else {
         response_head = (char *) malloc(12);
-        response_head[0] = 0x81;
+        response_head[0] = 0x82;
         response_head[1] = 127;
         memcpy(response_head + 2, reinterpret_cast<const void *>(head->payload_length), sizeof(unsigned long long));
         inverted_string(response_head + 2, sizeof(unsigned long long));
@@ -299,8 +299,10 @@ int main() {
             } else {
                 frame_head head;
                 int rul = recv_frame_head(events[i].data.fd, &head);
-                if (rul < 0)
-                    break;
+		if (rul < 0){
+                    close(events[i].data.fd);
+			break;
+		}
                 send_frame_head(events[i].data.fd, &head);
                 //read payload data
                 char payload_data[1024] = {0};
@@ -310,11 +312,9 @@ int main() {
                     rul = read(events[i].data.fd, payload_data, 1024);
                     if (rul <= 0)
                         break;
-
                     size += rul;
 
                     umask(payload_data, size, head.masking_key);
-                    printf("%d recive:%s\n", events[i].data.fd, payload_data);
 
 //                    //echo data
 //                    if (write(events[i].data.fd, payload_data, rul) <= 0)
@@ -324,7 +324,7 @@ int main() {
                     printf("socket %d close\n", events[i].data.fd, payload_data, 1024);
                     close(events[i].data.fd);
                 }
-//                processRequest(payload_data);
+                processRequest(payload_data);
                 printf("\n-----------\n");
 
             }
