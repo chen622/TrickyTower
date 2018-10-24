@@ -33,7 +33,7 @@ int processRequest(char *request, struct epoll_event *event) {
 //                    exit(EXIT_FAILURE);
 //                }
 //                int sem_id = semget(shm_id, 1, 0666 | IPC_CREAT);
-                room *room_shm;
+//                room *room_shm;
 
 //                room_shm = (room *) shmat(shm_id, NULL, 0);
 //                set_semvalue(sem_id, 1);
@@ -45,8 +45,8 @@ int processRequest(char *request, struct epoll_event *event) {
 //                memcpy(room_shm, new_room, sizeof(new_room));
 //                semaphore_v(sem_id);
 
-                mapRoom[roomId] = room_shm;
-                event->data.ptr = room_shm;
+                mapRoom[roomId] = new_room;
+                event->data.ptr = new_room;
                 cJSON_AddNumberToObject(response, "function", 1);
                 cJSON_AddNumberToObject(response, "roomId", roomId);
                 write(event->data.fd, cJSON_PrintUnformatted(data), 1024);
