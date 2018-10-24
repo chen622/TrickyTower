@@ -35,7 +35,7 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
                 printf("sockcet:%d\n", event.data.fd);
                 char name[20];
                 strcpy(name, "撕逼小组");
-                room new_room(roomId, name, event.data.fd);
+                room new_room(name, event.data.fd);
                 printf("1\n");
                 mapRoom[roomId] = new_room;
                 cJSON_AddNumberToObject(response, "function", 1);
@@ -63,8 +63,7 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
 }
 
 void broadcast(int epoll_fd) {
-    map<int, player>::iterator iter;
-    for (iter = mapPlayer.begin(); iter != mapPlayer.end(); iter++) {
+    for (map<int, player>::iterator iter = mapPlayer.begin(); iter != mapPlayer.end(); iter++) {
         if (iter->second.room_id != -1) {
             continue;
         }
@@ -391,6 +390,16 @@ int main() {
                 if (mapPlayer[events[i].data.fd].event == 1) {
                     cJSON_AddNumberToObject(response, "function", 1);
                     cJSON_AddNumberToObject(response, "type", 2);
+                    cJSON *data = cJSON_CreateArray();
+                    for (map<int, room>::iterator iter = mapRoom.begin(); iter != mapRoom.end(); iter++){
+                        cJSON *r = cJSON_CreateObject();
+                        cJSON_AddNumberToObject(r,"id",iter->first);
+                        cJSON_AddNumberToObject(r,"amount",iter->second.getConnectAmount());
+                        cJSON_AddStringToObject(r,"name",iter->second.getName());
+
+                        cJSON_AddItemToArray(data, r);
+                    }
+                    cJSON_AddItemToObject(response,"data",data);
                     char *json = cJSON_PrintUnformatted(response);
                     frame_head head;
                     head.payload_length = strlen(json);

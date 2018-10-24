@@ -8,7 +8,6 @@
 
 class room {
 private:
-    int id;
     char *name;
     int connectAmount;
     int host = -1;
@@ -18,10 +17,6 @@ public:
     int getConnectAmount() const;
 
     void setConnectAmount(int connectAmount);
-
-    int getId() const;
-
-    void setId(int id);
 
     char *getName() const;
 
@@ -43,7 +38,7 @@ public:
 
     room();
 
-    room(int id, char *name,int host);
+    room(char *name,int host);
 };
 
 

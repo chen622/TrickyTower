@@ -4,15 +4,7 @@
 
 #include "room.h"
 
-room::room(int id, char *name, int host) : id(id), name(name), host(host) {}
-
-int room::getId() const {
-    return id;
-}
-
-void room::setId(int id) {
-    room::id = id;
-}
+room::room(char *name, int host) : name(name), host(host) {}
 
 char *room::getName() const {
     return name;
