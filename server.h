@@ -5,6 +5,8 @@
 #ifndef WEBSOCKET_SERVER_H
 #define WEBSOCKET_SERVER_H
 
+#include "room.h"
+#include "semaphore.h"
 
 #include <stdlib.h>
 #include <stdio.h>

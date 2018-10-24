@@ -1,10 +1,11 @@
 #include "server.h"
-#include "room.h"
+
 #include <openssl/sha.h>
 #include <openssl/pem.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <cjson/cJSON.h>
+#include <sys/sem.h>
 
 using namespace std;
 
@@ -21,16 +22,28 @@ int processRequest(char *request, struct epoll_event *event) {
     } else {
         int function = cJSON_GetObjectItem(data, "function")->valueint;
         switch (function)
-            case 1: {
-                int seg_id = shmget(roomId, 0, IPC_CREAT | 0777);
-                room *newRoom = new room(seg_id, "撕逼小组", event->data.fd);
-                newRoom = (room *) shmat(seg_id, NULL, 0);
-                mapRoom[seg_id] = newRoom;
-                event->data.ptr = newRoom;
+            case 1: {//创建房间
+                int shm_id = shmget(roomId, 0, IPC_CREAT | 0777);
+                int sem_id = semget(shm_id, 1, 0666 | IPC_CREAT);
+                room *room_shm;
+
+                room_shm = (room *) shmat(shm_id, NULL, 0);
+                set_semvalue(sem_id, 1);
+
+                semaphore_p(sem_id);
+                room *new_room = new room(shm_id, "撕逼小组", event->data.fd);
+                memcpy(room_shm, new_room, sizeof(new_room));
+                semaphore_v(sem_id);
+
+                mapRoom[shm_id] = room_shm;
+                event->data.ptr = room_shm;
                 cJSON_AddNumberToObject(response, "function", 1);
-                cJSON_AddNumberToObject(response, "roomId", seg_id);
-                write(event->data.fd, cJSON_PrintUnformatted(data),1024);
+                cJSON_AddNumberToObject(response, "roomId", shm_id);
+                write(event->data.fd, cJSON_PrintUnformatted(data), 1024);
                 roomId++;
+
+                del_semvalue(sem_id);
+                shmctl(shm_id, IPC_RMID, NULL);
                 return roomId;
             }
 
