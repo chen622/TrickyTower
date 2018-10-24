@@ -5,10 +5,12 @@
 #ifndef TRICKYTOWERSERVER_ROOM_H
 #define TRICKYTOWERSERVER_ROOM_H
 
+#include <string>
+using namespace std;
 
 class room {
 private:
-    char *name;
+    string name;
     int connectAmount = 0;
     int host = -1;
     int player2 = -1;
@@ -18,9 +20,9 @@ public:
 
     void setConnectAmount(int connectAmount);
 
-    char *getName() const;
+    string getName() const;
 
-    void setName(char *name);
+    void setName(string name);
 
     int getHost() const;
 
@@ -38,7 +40,7 @@ public:
 
     room();
 
-    room(char *name,int host);
+    room(string name,int host);
 };
 
 

@@ -4,13 +4,12 @@
 
 #include "room.h"
 
-room::room(char *name, int host) : name(name), host(host) {}
-
-char *room::getName() const {
+room::room(string name, int host) : name(name), host(host) {}
+string room::getName() const {
     return name;
 }
 
-void room::setName(char *name) {
+void room::setName(string name) {
     room::name = name;
 }
 

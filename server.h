@@ -7,6 +7,7 @@
 
 #include "room.h"
 #include "websocket.h"
+#include <string>
 //#include "semaphore.h"
 
 using namespace std;

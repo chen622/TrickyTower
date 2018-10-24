@@ -22,9 +22,8 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
         printf("function:%d\n", function);
         switch (function) {
             case 1: {//创建房间
-                printf("sockcet:%d\n", event.data.fd);
-                char *name;
-                strcpy(name, "abcd");
+                printf("socket:%d\n", event.data.fd);
+                string name("abcd");
                 room new_room(name, event.data.fd);
                 printf("1\n");
                 mapRoom[roomId] = new_room;
@@ -161,7 +160,7 @@ int main() {
                         cJSON *r = cJSON_CreateObject();
                         cJSON_AddNumberToObject(r, "id", iter->first);
                         cJSON_AddNumberToObject(r, "amount", iter->second.getConnectAmount());
-                        cJSON_AddStringToObject(r, "name", iter->second.getName());
+                        cJSON_AddStringToObject(r, "name", iter->second.getName().c_str());
 
                         cJSON_AddItemToArray(data, r);
                     }
