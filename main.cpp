@@ -45,10 +45,10 @@ int processRequest(char *request,epoll_event event, int epoll_fd, int i) {
                     if (iter->second.room_id!=-1){
                         continue;
                     }
-                    epoll_event newEvent;
+                epoll_event newEvent;
                     newEvent.events = EPOLLOUT;        //表示对应的文件描述符可写（包括对端SOCKET正常关闭）
-                    newEvent.data.fd = iter->first;//将connFd设置为要读取的文件描述符
-                    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, iter->first, &event) == -1) {
+                newEvent.data.fd = iter->first;//将connFd设置为要读取的文件描述符
+                if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, iter->first, &newEvent) == -1) {
                         perror("epoll_ctl:conn_fd register failed");
                         exit(EXIT_FAILURE);
                     }
@@ -333,7 +333,8 @@ int main() {
                     exit(EXIT_FAILURE);
                 }
             } else if (events[i].events & EPOLLIN) {
-                frame_head head;
+                printf("recieve\n");
+		frame_head head;
                 int rul = recv_frame_head(events[i].data.fd, &head);
                 if (rul < 0) {
                     close(events[i].data.fd);
@@ -374,8 +375,9 @@ int main() {
                 cJSON_AddNumberToObject(response, "type", 2);
                 char *json = cJSON_PrintUnformatted(response);
                 write(events[i].data.fd,json, sizeof(json));
-                event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
-                event.data.fd = events[i].data.fd;//将connFd设置为要读取的文件描述符
+                    
+		event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
+           	event.data.fd = events[i].data.fd;//将connFd设置为要读取的文件描述符
                 //event.data.ptr = &head;
                 if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1) {
                     perror("epoll_ctl:conn_fd register failed");
