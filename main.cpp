@@ -17,6 +17,11 @@ int roomId = 60;
 
 //scp -r C:\Users\chen\CLionProjects\Websocket root@127.0.0.1:\home\chen\Experiment\
 
+/*
+ * Request json:{
+ *      function: //1:创建房间，2:获取房间
+ * }
+ */
 int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
     cJSON *data = cJSON_Parse(request);
     cJSON *response = cJSON_CreateObject();
@@ -25,7 +30,7 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
     } else {
         int function = cJSON_GetObjectItem(data, "function")->valueint;
         printf("function:%d\n", function);
-        switch (function)
+        switch (function) {
             case 1: {//创建房间
                 printf("sockcet:%d\n", event.data.fd);
                 char name[20];
@@ -43,25 +48,35 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
                 send_frame_head(event.data.fd, &head);
                 write(event.data.fd, json, strlen(json));
                 roomId++;
-                map<int, player>::iterator iter;
-                for (iter = mapPlayer.begin(); iter != mapPlayer.end(); iter++) {
-                    if (iter->second.room_id != -1) {
-                        continue;
-                    }
-                    epoll_event newEvent;
-                    newEvent.events = EPOLLOUT;        //表示对应的文件描述符可写（包括对端SOCKET正常关闭）
-                    newEvent.data.fd = iter->first;//将connFd设置为要读取的文件描述符
-                    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, iter->first, &newEvent) == -1) {
-                        perror("epoll_ctl:conn_fd register failed");
-                        exit(EXIT_FAILURE);
-                    }
-                }
+                broadcast(epoll_fd);
                 return 1;
+            };
+            case 2: {
+                broadcast(epoll_fd);
             }
 
-        return 0;
+            default:
+                return 0;
+        }
     }
     return -1;
+}
+
+void broadcast(int epoll_fd) {
+    map<int, player>::iterator iter;
+    for (iter = mapPlayer.begin(); iter != mapPlayer.end(); iter++) {
+        if (iter->second.room_id != -1) {
+            continue;
+        }
+        epoll_event newEvent;
+        newEvent.events = EPOLLOUT;        //表示对应的文件描述符可写（包括对端SOCKET正常关闭）
+        newEvent.data.fd = iter->first;//将connFd设置为要读取的文件描述符
+        iter->second.event = 1;
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, iter->first, &newEvent) == -1) {
+            perror("epoll_ctl:conn_fd register failed");
+            exit(EXIT_FAILURE);
+        }
+    }
 }
 
 int passive_server(int port, int queue) {
@@ -372,20 +387,24 @@ int main() {
             } else {
                 printf("write\n");
                 cJSON *response = cJSON_CreateObject();
-                cJSON_AddNumberToObject(response, "function", 1);
-                cJSON_AddNumberToObject(response, "type", 2);
-                char *json = cJSON_PrintUnformatted(response);
-                frame_head head;
-                head.payload_length = strlen(json);
-                send_frame_head(events[i].data.fd, &head);
-                write(events[i].data.fd, json, strlen(json));
 
-                event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
-                event.data.fd = events[i].data.fd;//将connFd设置为要读取的文件描述符
-                //event.data.ptr = &head;
-                if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1) {
-                    perror("epoll_ctl:conn_fd register failed");
-                    exit(EXIT_FAILURE);
+                if (mapPlayer[events[i].data.fd].event == 1) {
+                    cJSON_AddNumberToObject(response, "function", 1);
+                    cJSON_AddNumberToObject(response, "type", 2);
+                    char *json = cJSON_PrintUnformatted(response);
+                    frame_head head;
+                    head.payload_length = strlen(json);
+                    send_frame_head(events[i].data.fd, &head);
+                    write(events[i].data.fd, json, strlen(json));
+
+                    mapPlayer[events[i].data.fd].event = -1;
+                    event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
+                    event.data.fd = events[i].data.fd;//将connFd设置为要读取的文件描述符
+                    //event.data.ptr = &head;
+                    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1) {
+                        perror("epoll_ctl:conn_fd register failed");
+                        exit(EXIT_FAILURE);
+                    }
                 }
             }
 

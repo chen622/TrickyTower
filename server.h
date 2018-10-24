@@ -62,5 +62,6 @@ struct player {
 };
 
 int send_frame_head(int fd, frame_head *head);
+void broadcast(int epoll_fd);
 
 #endif //WEBSOCKET_SERVER_H
