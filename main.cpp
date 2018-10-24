@@ -36,7 +36,7 @@ int processRequest(char *request,epoll_event event, int epoll_fd, int i) {
                 cJSON_AddNumberToObject(response, "function", 1);
                 cJSON_AddNumberToObject(response, "type", 1);
                 cJSON_AddNumberToObject(response, "roomId", roomId);
-                char *json = cJSON_PrintUnformatted(data);
+                char *json = cJSON_PrintUnformatted(response);
                 printf("socket:%d\n", event.data.fd);
                 write(event.data.fd, json, strlen(json));
                 roomId++;
@@ -368,8 +368,6 @@ int main() {
 
             } else {
                 printf("write\n");
-                char *str;
-                strcpy(str,"新房间");
                 cJSON *response = cJSON_CreateObject();
                 cJSON_AddNumberToObject(response, "function", 1);
                 cJSON_AddNumberToObject(response, "type", 2);
