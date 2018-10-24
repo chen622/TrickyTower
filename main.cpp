@@ -9,7 +9,6 @@
 #include <sys/sem.h>
 
 
-
 using namespace std;
 
 map<int, room> mapRoom;
@@ -18,49 +17,43 @@ int roomId = 60;
 
 //scp -r C:\Users\chen\CLionProjects\Websocket root@127.0.0.1:\home\chen\Experiment\
 
-int processRequest(char *request, struct epoll_event event[],int i) {
+int processRequest(char *request,epoll_event event, int epoll_fd, int i) {
     cJSON *data = cJSON_Parse(request);
     cJSON *response = cJSON_CreateObject();
     if (!data) {
         printf("Error before:[%s]\n", cJSON_GetErrorPtr());
     } else {
         int function = cJSON_GetObjectItem(data, "function")->valueint;
-        printf("function:%d\n",function);
-	switch (function)
+        printf("function:%d\n", function);
+        switch (function)
             case 1: {//创建房间
-//                int shm_id = shmget(roomId, 0, IPC_CREAT | 0777);
-//                printf("shm:%d\n",shm_id);
-//                if (shm_id == -1)
-//                {
-//                    fprintf(stderr, "shmget failed.\n");
-//                    exit(EXIT_FAILURE);
-//                }
-//                int sem_id = semget(shm_id, 1, 0666 | IPC_CREAT);
-//                room *room_shm;
-
-//                room_shm = (room *) shmat(shm_id, NULL, 0);
-//                set_semvalue(sem_id, 1);
-
-//                semaphore_p(sem_id);
-                printf("sockcet:%d\n",event[i].data.fd);
-		char name[20];
-                strcpy(name,"撕逼小组");
-                room new_room(roomId, name, event->data.fd);
-//                memcpy(room_shm, new_room, sizeof(new_room));
-//                semaphore_v(sem_id);
-		printf("1\n");
+                printf("sockcet:%d\n", event.data.fd);
+                char name[20];
+                strcpy(name, "撕逼小组");
+                room new_room(roomId, name, event.data.fd);
+                printf("1\n");
                 mapRoom[roomId] = new_room;
-                //event[i].data.u32 = roomId;
                 cJSON_AddNumberToObject(response, "function", 1);
+                cJSON_AddNumberToObject(response, "type", 1);
                 cJSON_AddNumberToObject(response, "roomId", roomId);
-		char *json = cJSON_PrintUnformatted(data);
-                printf("socket:%d\n",event[i].data.fd);
-		write(event[i].data.fd, json, strlen(json));
+                char *json = cJSON_PrintUnformatted(data);
+                printf("socket:%d\n", event.data.fd);
+                write(event.data.fd, json, strlen(json));
                 roomId++;
-
-//                del_semvalue(sem_id);
-//                shmctl(shm_id, IPC_RMID, NULL);
-                return roomId;
+                map<int, player>::iterator iter;
+                for(iter = mapPlayer.begin(); iter != mapPlayer.end(); iter++) {
+                    if (iter->second.room_id!=-1){
+                        continue;
+                    }
+                    epoll_event newEvent;
+                    newEvent.events = EPOLLOUT;        //表示对应的文件描述符可写（包括对端SOCKET正常关闭）
+                    newEvent.data.fd = iter->first;//将connFd设置为要读取的文件描述符
+                    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, iter->first, &event) == -1) {
+                        perror("epoll_ctl:conn_fd register failed");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                return 1;
             }
 
         return 0;
@@ -339,7 +332,7 @@ int main() {
                     perror("epoll_ctl:conn_fd register failed");
                     exit(EXIT_FAILURE);
                 }
-            } else {
+            } else if (events[i].events & EPOLLIN) {
                 frame_head head;
                 int rul = recv_frame_head(events[i].data.fd, &head);
                 if (rul < 0) {
@@ -368,10 +361,26 @@ int main() {
                     mapPlayer.erase(events[i].data.fd);
                     close(events[i].data.fd);
                 }
-		printf("first:%d\n",events[i].data.fd);
-                processRequest(payload_data, events,i);
+                printf("first:%d\n", events[i].data.fd);
+                processRequest(payload_data,events[i], epoll_fd, i);
                 printf("\n-----------\n");
 
+            } else {
+                printf("write\n");
+                char *str;
+                strcpy(str,"新房间");
+                cJSON *response = cJSON_CreateObject();
+                cJSON_AddNumberToObject(response, "function", 1);
+                cJSON_AddNumberToObject(response, "type", 2);
+                char *json = cJSON_PrintUnformatted(response);
+                write(events[i].data.fd,json, sizeof(json));
+                event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
+                event.data.fd = events[i].data.fd;//将connFd设置为要读取的文件描述符
+                //event.data.ptr = &head;
+                if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1) {
+                    perror("epoll_ctl:conn_fd register failed");
+                    exit(EXIT_FAILURE);
+                }
             }
 
         }

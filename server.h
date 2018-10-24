@@ -58,6 +58,7 @@ typedef struct _frame_head {
 
 struct player {
     int room_id = -1;
+    int event = -1;//1表示房间请求
 };
 
 #endif //WEBSOCKET_SERVER_H
