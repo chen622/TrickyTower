@@ -1,11 +1,13 @@
 #include "server.h"
 
+
 #include <openssl/sha.h>
 #include <openssl/pem.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <cjson/cJSON.h>
 #include <sys/sem.h>
+
 
 using namespace std;
 
@@ -31,7 +33,9 @@ int processRequest(char *request, struct epoll_event *event) {
                 set_semvalue(sem_id, 1);
 
                 semaphore_p(sem_id);
-                room *new_room = new room(shm_id, "撕逼小组", event->data.fd);
+                char *name;
+                strcpy(name,"撕逼小组");
+                room *new_room = new room(shm_id, name, event->data.fd);
                 memcpy(room_shm, new_room, sizeof(new_room));
                 semaphore_v(sem_id);
 
