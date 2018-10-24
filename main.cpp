@@ -11,7 +11,7 @@
 
 using namespace std;
 
-map<int, room *> mapRoom;
+map<int, room> mapRoom;
 int roomId = 60;
 
 //scp -r C:\Users\chen\CLionProjects\Websocket root@127.0.0.1:\home\chen\Experiment\
@@ -41,12 +41,12 @@ int processRequest(char *request, struct epoll_event *event) {
 //                semaphore_p(sem_id);
                 char *name;
                 strcpy(name,"撕逼小组");
-                room *new_room = new room(roomId, name, event->data.fd);
+                room new_room(roomId, name, event->data.fd);
 //                memcpy(room_shm, new_room, sizeof(new_room));
 //                semaphore_v(sem_id);
 
                 mapRoom[roomId] = new_room;
-                event->data.ptr = new_room;
+                event->data.u32 = roomId;
                 cJSON_AddNumberToObject(response, "function", 1);
                 cJSON_AddNumberToObject(response, "roomId", roomId);
                 write(event->data.fd, cJSON_PrintUnformatted(data), 1024);
