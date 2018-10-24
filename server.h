@@ -56,4 +56,8 @@ typedef struct _frame_head {
     char masking_key[4];
 } frame_head;
 
+struct player {
+    int room_id = -1;
+};
+
 #endif //WEBSOCKET_SERVER_H

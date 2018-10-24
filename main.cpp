@@ -9,9 +9,11 @@
 #include <sys/sem.h>
 
 
+
 using namespace std;
 
 map<int, room> mapRoom;
+map<int, player> mapPlayer;
 int roomId = 60;
 
 //scp -r C:\Users\chen\CLionProjects\Websocket root@127.0.0.1:\home\chen\Experiment\
@@ -323,14 +325,8 @@ int main() {
                 shakehands(connFd);
 
                 printf("shakerhands\n");
-                //frame_head head;
-                //int rul = recv_frame_head(connFd, &head);
-                //if (rul < 0)
-                //    break;
-//              printf("fin=%d\nopcode=0x%X\nmask=%d\npayload_len=%llu\n",head.fin,head.opcode,head.mask,head.payload_length);
-
-                //echo head
-                //send_frame_head(connFd, &head);
+                player newPlayer;
+                mapPlayer[connFd] = newPlayer;
 
                 event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
                 event.data.fd = connFd;//将connFd设置为要读取的文件描述符
@@ -365,6 +361,7 @@ int main() {
                 } while (size < head.payload_length);
                 if (head.opcode == 0x8) {
                     printf("socket %d close\n", events[i].data.fd, payload_data, 1024);
+                    mapPlayer.erase(events[i].data.fd);
                     close(events[i].data.fd);
                 }
                 processRequest(payload_data, &events[i]);
