@@ -17,7 +17,7 @@ int roomId = 60;
 
 //scp -r C:\Users\chen\CLionProjects\Websocket root@127.0.0.1:\home\chen\Experiment\
 
-int processRequest(char *request,epoll_event event, int epoll_fd, int i) {
+int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
     cJSON *data = cJSON_Parse(request);
     cJSON *response = cJSON_CreateObject();
     if (!data) {
@@ -41,14 +41,14 @@ int processRequest(char *request,epoll_event event, int epoll_fd, int i) {
                 write(event.data.fd, json, strlen(json));
                 roomId++;
                 map<int, player>::iterator iter;
-                for(iter = mapPlayer.begin(); iter != mapPlayer.end(); iter++) {
-                    if (iter->second.room_id!=-1){
+                for (iter = mapPlayer.begin(); iter != mapPlayer.end(); iter++) {
+                    if (iter->second.room_id != -1) {
                         continue;
                     }
-                epoll_event newEvent;
+                    epoll_event newEvent;
                     newEvent.events = EPOLLOUT;        //表示对应的文件描述符可写（包括对端SOCKET正常关闭）
-                newEvent.data.fd = iter->first;//将connFd设置为要读取的文件描述符
-                if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, iter->first, &newEvent) == -1) {
+                    newEvent.data.fd = iter->first;//将connFd设置为要读取的文件描述符
+                    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, iter->first, &newEvent) == -1) {
                         perror("epoll_ctl:conn_fd register failed");
                         exit(EXIT_FAILURE);
                     }
@@ -334,7 +334,7 @@ int main() {
                 }
             } else if (events[i].events & EPOLLIN) {
                 printf("recieve\n");
-		frame_head head;
+                frame_head head;
                 int rul = recv_frame_head(events[i].data.fd, &head);
                 if (rul < 0) {
                     close(events[i].data.fd);
@@ -363,7 +363,7 @@ int main() {
                     close(events[i].data.fd);
                 }
                 printf("first:%d\n", events[i].data.fd);
-                processRequest(payload_data,events[i], epoll_fd, i);
+                processRequest(payload_data, events[i], epoll_fd, i);
                 printf("\n-----------\n");
 
             } else {
@@ -372,10 +372,10 @@ int main() {
                 cJSON_AddNumberToObject(response, "function", 1);
                 cJSON_AddNumberToObject(response, "type", 2);
                 char *json = cJSON_PrintUnformatted(response);
-                write(events[i].data.fd,json, sizeof(json));
-                    
-		event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
-           	event.data.fd = events[i].data.fd;//将connFd设置为要读取的文件描述符
+                write(events[i].data.fd, json, strlen(json));
+
+                event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
+                event.data.fd = events[i].data.fd;//将connFd设置为要读取的文件描述符
                 //event.data.ptr = &head;
                 if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1) {
                     perror("epoll_ctl:conn_fd register failed");
