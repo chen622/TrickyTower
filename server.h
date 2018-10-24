@@ -61,4 +61,6 @@ struct player {
     int event = -1;//1表示房间请求
 };
 
+int send_frame_head(int fd, frame_head *head);
+
 #endif //WEBSOCKET_SERVER_H

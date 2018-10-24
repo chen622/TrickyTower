@@ -38,6 +38,9 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
                 cJSON_AddNumberToObject(response, "roomId", roomId);
                 char *json = cJSON_PrintUnformatted(response);
                 printf("socket:%d\n", event.data.fd);
+                frame_head head;
+                head.payload_length = strlen(json);
+                send_frame_head(event.data.fd, &head);
                 write(event.data.fd, json, strlen(json));
                 roomId++;
                 map<int, player>::iterator iter;
@@ -372,6 +375,9 @@ int main() {
                 cJSON_AddNumberToObject(response, "function", 1);
                 cJSON_AddNumberToObject(response, "type", 2);
                 char *json = cJSON_PrintUnformatted(response);
+                frame_head head;
+                head.payload_length = strlen(json);
+                send_frame_head(events[i].data.fd, &head);
                 write(events[i].data.fd, json, strlen(json));
 
                 event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
