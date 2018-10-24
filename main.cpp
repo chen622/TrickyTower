@@ -25,35 +25,35 @@ int processRequest(char *request, struct epoll_event *event) {
         int function = cJSON_GetObjectItem(data, "function")->valueint;
         switch (function)
             case 1: {//创建房间
-                int shm_id = shmget(roomId, 0, IPC_CREAT | 0777);
-                printf("shm:%d\n",shm_id);
-                if (shm_id == -1)
-                {
-                    fprintf(stderr, "shmget failed.\n");
-                    exit(EXIT_FAILURE);
-                }
+//                int shm_id = shmget(roomId, 0, IPC_CREAT | 0777);
+//                printf("shm:%d\n",shm_id);
+//                if (shm_id == -1)
+//                {
+//                    fprintf(stderr, "shmget failed.\n");
+//                    exit(EXIT_FAILURE);
+//                }
 //                int sem_id = semget(shm_id, 1, 0666 | IPC_CREAT);
                 room *room_shm;
 
-                room_shm = (room *) shmat(shm_id, NULL, 0);
+//                room_shm = (room *) shmat(shm_id, NULL, 0);
 //                set_semvalue(sem_id, 1);
 
 //                semaphore_p(sem_id);
                 char *name;
                 strcpy(name,"撕逼小组");
-                room *new_room = new room(shm_id, name, event->data.fd);
-                memcpy(room_shm, new_room, sizeof(new_room));
+                room *new_room = new room(roomId, name, event->data.fd);
+//                memcpy(room_shm, new_room, sizeof(new_room));
 //                semaphore_v(sem_id);
 
-                mapRoom[shm_id] = room_shm;
+                mapRoom[roomId] = room_shm;
                 event->data.ptr = room_shm;
                 cJSON_AddNumberToObject(response, "function", 1);
-                cJSON_AddNumberToObject(response, "roomId", shm_id);
+                cJSON_AddNumberToObject(response, "roomId", roomId);
                 write(event->data.fd, cJSON_PrintUnformatted(data), 1024);
                 roomId++;
 
 //                del_semvalue(sem_id);
-                shmctl(shm_id, IPC_RMID, NULL);
+//                shmctl(shm_id, IPC_RMID, NULL);
                 return roomId;
             }
 
