@@ -3,4 +3,12 @@ project(TrickyTowerServer)
 
 set(CMAKE_CXX_STANDARD 14)
 
+
+LINK_DIRECTORIES(/usr/local/lib)
+
 add_executable(Websocket main.cpp server.h room.cpp room.h)
+
+target_link_libraries(Websocket libcrypto.so)
+
+target_link_libraries(Websocket libcjson.so)
+
