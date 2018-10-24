@@ -310,11 +310,7 @@ int main() {
                     rul = read(events[i].data.fd, payload_data, 1024);
                     if (rul <= 0)
                         break;
-                    else if (head.opcode == 0x8) {
-                        printf("socket %d close\n", events[i].data.fd, payload_data, 1024);
-                        close(events[i].data.fd);
-                        break;
-                    }
+
                     size += rul;
 
                     umask(payload_data, size, head.masking_key);
@@ -324,8 +320,13 @@ int main() {
 //                    if (write(events[i].data.fd, payload_data, rul) <= 0)
 //                        break;
                 } while (size < head.payload_length);
+                if (head.opcode == 0x8) {
+                    printf("socket %d close\n", events[i].data.fd, payload_data, 1024);
+                    close(events[i].data.fd);
+                }
 //                processRequest(payload_data);
                 printf("\n-----------\n");
+
             }
 
         }
