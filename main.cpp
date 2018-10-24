@@ -18,14 +18,15 @@ int roomId = 60;
 
 //scp -r C:\Users\chen\CLionProjects\Websocket root@127.0.0.1:\home\chen\Experiment\
 
-int processRequest(char *request, struct epoll_event *event) {
+int processRequest(char *request, struct epoll_event event[],int i) {
     cJSON *data = cJSON_Parse(request);
     cJSON *response = cJSON_CreateObject();
     if (!data) {
         printf("Error before:[%s]\n", cJSON_GetErrorPtr());
     } else {
         int function = cJSON_GetObjectItem(data, "function")->valueint;
-        switch (function)
+        printf("function:%d\n",function);
+	switch (function)
             case 1: {//创建房间
 //                int shm_id = shmget(roomId, 0, IPC_CREAT | 0777);
 //                printf("shm:%d\n",shm_id);
@@ -41,17 +42,20 @@ int processRequest(char *request, struct epoll_event *event) {
 //                set_semvalue(sem_id, 1);
 
 //                semaphore_p(sem_id);
-                char *name;
+                printf("sockcet:%d\n",event[i].data.fd);
+		char name[20];
                 strcpy(name,"撕逼小组");
                 room new_room(roomId, name, event->data.fd);
 //                memcpy(room_shm, new_room, sizeof(new_room));
 //                semaphore_v(sem_id);
-
+		printf("1\n");
                 mapRoom[roomId] = new_room;
-                event->data.u32 = roomId;
+                //event[i].data.u32 = roomId;
                 cJSON_AddNumberToObject(response, "function", 1);
                 cJSON_AddNumberToObject(response, "roomId", roomId);
-                write(event->data.fd, cJSON_PrintUnformatted(data), 1024);
+		char *json = cJSON_PrintUnformatted(data);
+                printf("socket:%d\n",event[i].data.fd);
+		write(event[i].data.fd, json, strlen(json));
                 roomId++;
 
 //                del_semvalue(sem_id);
@@ -253,19 +257,19 @@ int send_frame_head(int fd, frame_head *head) {
     int head_length = 0;
     if (head->payload_length < 126) {
         response_head = (char *) malloc(2);
-        response_head[0] = 0x82;
+        response_head[0] = 0x81;
         response_head[1] = head->payload_length;
         head_length = 2;
     } else if (head->payload_length < 0xFFFF) {
         response_head = (char *) malloc(4);
-        response_head[0] = 0x82;
+        response_head[0] = 0x81;
         response_head[1] = 126;
         response_head[2] = (head->payload_length >> 8 & 0xFF);
         response_head[3] = (head->payload_length & 0xFF);
         head_length = 4;
     } else {
         response_head = (char *) malloc(12);
-        response_head[0] = 0x82;
+        response_head[0] = 0x81;
         response_head[1] = 127;
         memcpy(response_head + 2, reinterpret_cast<const void *>(head->payload_length), sizeof(unsigned long long));
         inverted_string(response_head + 2, sizeof(unsigned long long));
@@ -356,15 +360,16 @@ int main() {
                     umask(payload_data, size, head.masking_key);
 
 //                    //echo data
-//                    if (write(events[i].data.fd, payload_data, rul) <= 0)
-//                        break;
+                    if (write(events[i].data.fd, payload_data, rul) <= 0)
+                        break;
                 } while (size < head.payload_length);
                 if (head.opcode == 0x8) {
                     printf("socket %d close\n", events[i].data.fd, payload_data, 1024);
                     mapPlayer.erase(events[i].data.fd);
                     close(events[i].data.fd);
                 }
-                processRequest(payload_data, &events[i]);
+		printf("first:%d\n",events[i].data.fd);
+                processRequest(payload_data, events,i);
                 printf("\n-----------\n");
 
             }
