@@ -43,9 +43,11 @@ int room::addPlayer(int player) {
         return 0;
     else if (player2 == -1) {
         player2 = player;
+        connectAmount++;
         return 2;
     } else if(player3 == -1){
         player3 = player;
+        connectAmount++;
         return 3;
     }
 }

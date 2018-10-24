@@ -9,7 +9,7 @@
 class room {
 private:
     char *name;
-    int connectAmount;
+    int connectAmount = 0;
     int host = -1;
     int player2 = -1;
     int player3 = -1;
