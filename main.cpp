@@ -9,10 +9,12 @@ int roomId = 60;
 
 /*
  * Request json:{
- *      function: //1:创建房间; 2:获取房间; 3:加入房间; 4:开始游戏
+ *      function: //1:创建房间; 2:获取房间; 3:加入房间; 4:开始游戏; 5:心跳同步
  *      room:{
  *          id:
  *          name:
+ *      }，
+ *      bodies:{
  *      }
  * }
  */
@@ -63,7 +65,7 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
                 mapPlayer[mapRoom[host->room_id].getPlayer3()].playing = 1;
                 list[2] = mapRoom[host->room_id].getPlayer3();
 
-                printf("player:%d,%d,%d\n",list[0],list[1],list[2]);
+                printf("player:%d,%d,%d\n", list[0], list[1], list[2]);
                 for (int j = 0; j < 3; ++j) {
                     epoll_event newEvent;
                     newEvent.events = EPOLLOUT;//表示对应的文件描述符可写（包括对端SOCKET正常关闭）
