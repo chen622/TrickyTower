@@ -63,12 +63,13 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
                 mapPlayer[mapRoom[host->room_id].getPlayer3()].playing = 1;
                 list[2] = mapRoom[host->room_id].getPlayer3();
 
+                printf("player:%d,%d,%d\n",list[0],list[1],list[2]);
                 for (int j = 0; j < 3; ++j) {
                     epoll_event newEvent;
-                    newEvent.events = EPOLLOUT;        //表示对应的文件描述符可写（包括对端SOCKET正常关闭）
-                    newEvent.data.fd = list[i];//将connFd设置为要读取的文件描述符
-                    mapPlayer[list[i]].event = 2;
-                    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, list[i], &newEvent) == -1) {
+                    newEvent.events = EPOLLOUT;//表示对应的文件描述符可写（包括对端SOCKET正常关闭）
+                    newEvent.data.fd = list[j];//将connFd设置为要读取的文件描述符
+                    mapPlayer[list[j]].event = 2;
+                    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, list[j], &newEvent) == -1) {
                         perror("epoll_ctl:conn_fd register failed");
                         exit(EXIT_FAILURE);
                     }
