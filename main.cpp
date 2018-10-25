@@ -57,15 +57,11 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
                 return 3;
             };
             case 4: {
-                roomcast(epoll_fd, event.data.fd, 2);
+                roomcast(epoll_fd, event.data.fd, 2,data);
                 return 4;
             };
             case 5: {
-                roomcast(epoll_fd, event.data.fd, 3);
-                if (mapPlayer[event.data.fd].msg1 == NULL) {
-                    mapPlayer[event.data.fd].msg1 = cJSON_GetObjectItem(data, "bodies");
-                } else
-                    mapPlayer[event.data.fd].msg2 = cJSON_GetObjectItem(data, "bodise");
+                roomcast(epoll_fd, event.data.fd, 3,data);
                 return 5;
             }
             default:
@@ -75,7 +71,7 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
     return -1;
 }
 
-void roomcast(int epoll_fd, int socketFd, int eventId) {
+void roomcast(int epoll_fd, int socketFd, int eventId,cJSON *data) {
     int list[3];
     int size = 0;
     if (eventId == 2) {
@@ -88,11 +84,25 @@ void roomcast(int epoll_fd, int socketFd, int eventId) {
         mapPlayer[mapRoom[host->room_id].getPlayer2()].playing = 1;
         mapPlayer[mapRoom[host->room_id].getPlayer3()].playing = 1;
     } else {
+        room currentRoom = mapRoom[mapPlayer[socketFd].room_id];
         size = 2;
-        player *host = &mapPlayer[socketFd];
-        host->playing = 1;
-        list[0] = mapRoom[host->room_id].getPlayer2();
-        list[1] = mapRoom[host->room_id].getPlayer3();
+        if (currentRoom.getHost() == socketFd){
+            list[0] = currentRoom.getPlayer2();
+            mapPlayer[socketFd].msg1 = cJSON_GetObjectItem(data, "bodies");
+            list[1] = currentRoom.getPlayer3();
+            mapPlayer[socketFd].msg1 = cJSON_GetObjectItem(data, "bodies");
+        }else if (currentRoom.getPlayer2() == socketFd){
+            list[0] = currentRoom.getHost();
+            mapPlayer[socketFd].msg1 = cJSON_GetObjectItem(data, "bodies");
+            list[1] = currentRoom.getPlayer3();
+            mapPlayer[socketFd].msg2 = cJSON_GetObjectItem(data, "bodies");
+
+        }else if (currentRoom.getPlayer3() == socketFd){
+            list[0] = currentRoom.getHost();
+            mapPlayer[socketFd].msg2 = cJSON_GetObjectItem(data, "bodies");
+            list[1] = currentRoom.getPlayer2();
+            mapPlayer[socketFd].msg2 = cJSON_GetObjectItem(data, "bodies");
+        }
     }
 
     printf("player:%d,%d,%d\n", list[0], list[1], list[2]);
@@ -260,9 +270,11 @@ int main() {
                     mapPlayer[events[i].data.fd].event = -1;
                     cJSON_AddNumberToObject(response, "function", 3);
                     if (mapPlayer[events[i].data.fd].msg1 != NULL) {
+                        cJSON_AddNumberToObject(response, "type", 0);
                         cJSON_AddItemToObject(response, "data", mapPlayer[events[i].data.fd].msg1);
                         mapPlayer[events[i].data.fd].msg1 = NULL;
                     } else {
+                        cJSON_AddNumberToObject(response, "type", 1);
                         cJSON_AddItemToObjectCS(response, "data", mapPlayer[events[i].data.fd].msg2);
                         mapPlayer[events[i].data.fd].msg2 = NULL;
                     }
