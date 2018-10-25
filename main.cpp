@@ -275,7 +275,7 @@ int main() {
                         mapPlayer[events[i].data.fd].msg1 = NULL;
                     } else {
                         cJSON_AddNumberToObject(response, "type", 1);
-                        cJSON_AddItemToObjectCS(response, "data", mapPlayer[events[i].data.fd].msg2);
+                        cJSON_AddItemToObject(response, "data", mapPlayer[events[i].data.fd].msg2);
                         mapPlayer[events[i].data.fd].msg2 = NULL;
                     }
                     send_msg(events[i].data.fd, cJSON_PrintUnformatted(response));
