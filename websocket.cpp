@@ -9,7 +9,7 @@ int send_msg(int fd,char *str){
     frame_head head;
     head.payload_length = strlen(str);
     send_frame_head(fd, &head);
-    printf("send data(%d):%s\n",head.payload_length,str);
+    //printf("send data(%d):%s\n",head.payload_length,str);
     write(fd, str, strlen(str));
 }
 
