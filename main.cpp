@@ -17,7 +17,8 @@ int roomId = 60;
  * }
  */
 int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
-    cJSON *data = cJSON_Parse(request);
+    printf("process\n");
+	cJSON *data = cJSON_Parse(request);
     cJSON *response = cJSON_CreateObject();
     if (!data) {
         printf("Error before:[%s]\n", cJSON_GetErrorPtr());
@@ -163,7 +164,7 @@ int main() {
                 }
 //                send_frame_head(events[i].data.fd, &head);
                 //read payload data
-                char payload_data[1024] = {0};
+                char payload_data[102400] = {0};
                 int size = 0;
                 do {
                     int rul;
