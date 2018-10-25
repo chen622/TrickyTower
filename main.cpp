@@ -22,8 +22,11 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
         printf("function:%d\n", function);
         switch (function) {
             case 1: {//创建房间
+//                if (mapPlayer[event.data.fd].room_id==-1){
+//                    cJSON_AddNumberToObject(response)
+//                }
                 printf("socket:%d\n", event.data.fd);
-                string name("abcd");
+                string name = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(data,"room"),"name"));
                 room new_room(name, event.data.fd);
                 printf("1\n");
                 mapRoom[roomId] = new_room;
