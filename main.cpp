@@ -159,13 +159,16 @@ int main() {
                 if (mapPlayer[events[i].data.fd].event == 1) {
                     cJSON_AddNumberToObject(response, "function", 1);
                     cJSON_AddNumberToObject(response, "type", 2);
-                    cJSON_AddNumberToObject(response, "sockId", events[i].data.fd);
+                    cJSON_AddNumberToObject(response, "socketId", events[i].data.fd);
                     cJSON *data = cJSON_CreateArray();
                     for (map<int, room>::iterator iter = mapRoom.begin(); iter != mapRoom.end(); iter++) {
                         cJSON *r = cJSON_CreateObject();
                         cJSON_AddNumberToObject(r, "id", iter->first);
                         cJSON_AddNumberToObject(r, "amount", iter->second.getConnectAmount());
                         cJSON_AddStringToObject(r, "name", iter->second.getName().c_str());
+			cJSON_AddNumberToObject(r,"host",iter->second.getHost());
+			cJSON_AddNumberToObject(r,"player2",iter->second.getPlayer2());
+			cJSON_AddNumberToObject(r,"player3",iter->second.getPlayer3());
 
                         cJSON_AddItemToArray(data, r);
                     }

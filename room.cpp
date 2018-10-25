@@ -4,7 +4,9 @@
 
 #include "room.h"
 
-room::room(string name, int host) : name(name), host(host) {}
+room::room(string name, int host) : name(name), host(host) {
+	room::connectAmount++;
+}
 string room::getName() const {
     return name;
 }
