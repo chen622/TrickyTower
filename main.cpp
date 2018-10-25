@@ -26,7 +26,7 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
 //                    cJSON_AddNumberToObject(response)
 //                }
                 printf("socket:%d\n", event.data.fd);
-                string name = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(data,"room"),"name"));
+                string name = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(data, "room"), "name"));
                 room new_room(name, event.data.fd);
                 printf("1\n");
                 mapRoom[roomId] = new_room;
@@ -111,7 +111,8 @@ int main() {
                 player newPlayer;
                 mapPlayer[connFd] = newPlayer;
 
-                event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
+                event.events = EPOLLOUT;//表示对应的文件描述符可读（包括对端SOCKET正常关闭）
+                mapPlayer[connFd].event = 1;
                 event.data.fd = connFd;//将connFd设置为要读取的文件描述符
                 //event.data.ptr = &head;
                 if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, connFd, &event) == -1) {
@@ -148,7 +149,7 @@ int main() {
                     mapPlayer.erase(events[i].data.fd);
                     close(events[i].data.fd);
                 }
-                printf("receive data(%d):%s\n",head.payload_length,payload_data);
+                printf("receive data(%d):%s\n", head.payload_length, payload_data);
                 processRequest(payload_data, events[i], epoll_fd, i);
 
             } else {
@@ -158,6 +159,7 @@ int main() {
                 if (mapPlayer[events[i].data.fd].event == 1) {
                     cJSON_AddNumberToObject(response, "function", 1);
                     cJSON_AddNumberToObject(response, "type", 2);
+                    cJSON_AddNumberToObject(response, "sockId", events[i].data.fd);
                     cJSON *data = cJSON_CreateArray();
                     for (map<int, room>::iterator iter = mapRoom.begin(); iter != mapRoom.end(); iter++) {
                         cJSON *r = cJSON_CreateObject();
