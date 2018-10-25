@@ -100,7 +100,7 @@ void roomcast(int epoll_fd, int socketFd, int eventId) {
         epoll_event newEvent;
         newEvent.events = EPOLLOUT;//表示对应的文件描述符可写（包括对端SOCKET正常关闭）
         newEvent.data.fd = list[j];//将connFd设置为要读取的文件描述符
-        mapPlayer[list[j]].event = 2;
+        mapPlayer[list[j]].event = eventId;
         if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, list[j], &newEvent) == -1) {
             perror("epoll_ctl:conn_fd register failed");
             exit(EXIT_FAILURE);
