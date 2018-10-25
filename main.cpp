@@ -56,33 +56,55 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
                 return 3;
             };
             case 4: {
-                int list[3];
-                player *host = &mapPlayer[event.data.fd];
-                host->playing = 1;
-                list[0] = event.data.fd;
-                mapPlayer[mapRoom[host->room_id].getPlayer2()].playing = 1;
-                list[1] = mapRoom[host->room_id].getPlayer2();
-                mapPlayer[mapRoom[host->room_id].getPlayer3()].playing = 1;
-                list[2] = mapRoom[host->room_id].getPlayer3();
-
-                printf("player:%d,%d,%d\n", list[0], list[1], list[2]);
-                for (int j = 0; j < 3; ++j) {
-                    epoll_event newEvent;
-                    newEvent.events = EPOLLOUT;//表示对应的文件描述符可写（包括对端SOCKET正常关闭）
-                    newEvent.data.fd = list[j];//将connFd设置为要读取的文件描述符
-                    mapPlayer[list[j]].event = 2;
-                    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, list[j], &newEvent) == -1) {
-                        perror("epoll_ctl:conn_fd register failed");
-                        exit(EXIT_FAILURE);
-                    }
-                }
+                roomcast(epoll_fd, event.data.fd, 2);
                 return 4;
+            };
+            case 5: {
+                roomcast(epoll_fd, event.data.fd, 3);
+                if (mapPlayer[event.data.fd].msg1 == NULL) {
+                    mapPlayer[event.data.fd].msg1 = cJSON_GetObjectItem(data, "bodies");
+                } else
+                    mapPlayer[event.data.fd].msg2 = cJSON_GetObjectItem(data, "bodise");
+                return 5;
             }
             default:
                 return 0;
         }
     }
     return -1;
+}
+
+void roomcast(int epoll_fd, int socketFd, int eventId) {
+    int list[3];
+    int size = 0;
+    if (eventId == 2) {
+        size = 3;
+        player *host = &mapPlayer[socketFd];
+        host->playing = 1;
+        list[0] = socketFd;
+        list[1] = mapRoom[host->room_id].getPlayer2();
+        list[2] = mapRoom[host->room_id].getPlayer3();
+        mapPlayer[mapRoom[host->room_id].getPlayer2()].playing = 1;
+        mapPlayer[mapRoom[host->room_id].getPlayer3()].playing = 1;
+    } else {
+        size = 2;
+        player *host = &mapPlayer[socketFd];
+        host->playing = 1;
+        list[0] = mapRoom[host->room_id].getPlayer2();
+        list[1] = mapRoom[host->room_id].getPlayer3();
+    }
+
+    printf("player:%d,%d,%d\n", list[0], list[1], list[2]);
+    for (int j = 0; j < size; ++j) {
+        epoll_event newEvent;
+        newEvent.events = EPOLLOUT;//表示对应的文件描述符可写（包括对端SOCKET正常关闭）
+        newEvent.data.fd = list[j];//将connFd设置为要读取的文件描述符
+        mapPlayer[list[j]].event = 2;
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, list[j], &newEvent) == -1) {
+            perror("epoll_ctl:conn_fd register failed");
+            exit(EXIT_FAILURE);
+        }
+    }
 }
 
 void broadcast(int epoll_fd) {
@@ -226,6 +248,24 @@ int main() {
                     send_msg(events[i].data.fd, cJSON_PrintUnformatted(response));
 
                     mapPlayer[events[i].data.fd].event = -1;
+                    event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
+                    event.data.fd = events[i].data.fd;//将connFd设置为要读取的文件描述符
+                    //event.data.ptr = &head;
+                    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1) {
+                        perror("epoll_ctl:conn_fd register failed");
+                        exit(EXIT_FAILURE);
+                    }
+                } else if (mapPlayer[events[i].data.fd].event == 3) {
+                    mapPlayer[events[i].data.fd].event = -1;
+                    cJSON_AddNumberToObject(response, "function", 3);
+                    if (mapPlayer[events[i].data.fd].msg1 != NULL) {
+                        cJSON_AddItemToObject(response, "data", mapPlayer[events[i].data.fd].msg1);
+                        mapPlayer[events[i].data.fd].msg1 = NULL;
+                    } else {
+                        cJSON_AddItemToObjectCS(response, "data", mapPlayer[events[i].data.fd].msg2);
+                        mapPlayer[events[i].data.fd].msg2 = NULL;
+                    }
+                    send_msg(events[i].data.fd, cJSON_PrintUnformatted(response));
                     event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
                     event.data.fd = events[i].data.fd;//将connFd设置为要读取的文件描述符
                     //event.data.ptr = &head;
