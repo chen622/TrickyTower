@@ -2,6 +2,7 @@
 // Created by chen on 2018/10/24.
 //
 
+#include <netdb.h>
 #include "websocket.h"
 
 int send_msg(int fd,char *str){
@@ -17,12 +18,26 @@ int send_msg(int fd,char *str){
 int passive_server(int port, int queue) {
     ///定义sockfd
     int server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    struct hostent *hp;/*this is part of our*/
+    struct in_addr *hipaddr;
 
     ///定义sockaddr_in
     struct sockaddr_in server_sockaddr;
     server_sockaddr.sin_family = AF_INET;
     server_sockaddr.sin_port = htons(port);
-    server_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+//    server_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    bzero((void *) &server_sockaddr, sizeof(server_sockaddr));/*clear out struct*/
+
+    if(!inet_aton("127.0.0.1",hipaddr)){
+        perror("ip change failed!\n");
+        return -1;
+    }
+    hp = gethostbyaddr(hipaddr,4,AF_INET);
+
+    /*fill in host part*/
+    bcopy((void *) hp->h_addr, (void *) &server_sockaddr.sin_addr, hp->h_length);
+
 
     ///bind，成功返回0，出错返回-1
     if (bind(server_sockfd, (struct sockaddr *) &server_sockaddr, sizeof(server_sockaddr)) == -1) {
