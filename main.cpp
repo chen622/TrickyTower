@@ -9,7 +9,7 @@ int roomId = 60;
 
 /*
  * Request json:{
- *      function: //1:创建房间; 2:获取房间; 3:加入房间
+ *      function: //1:创建房间; 2:获取房间; 3:加入房间; 4:开始游戏
  *      room:{
  *          id:
  *          name:
@@ -33,7 +33,7 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
                 room new_room(name, event.data.fd);
                 printf("1\n");
                 mapRoom[roomId] = new_room;
-		mapPlayer[event.data.fd].room_id = roomId;
+                mapPlayer[event.data.fd].room_id = roomId;
                 cJSON_AddNumberToObject(response, "function", 1);
                 cJSON_AddNumberToObject(response, "type", 1);
                 cJSON_AddNumberToObject(response, "roomId", roomId);
@@ -44,15 +44,37 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
             };
             case 2: {
                 broadcast(epoll_fd);
+                return 2;
             };
-            case 3:{
-                int roomId = cJSON_GetObjectItem(cJSON_GetObjectItem(data,"room"),"id")->valueint;
+            case 3: {
+                int roomId = cJSON_GetObjectItem(cJSON_GetObjectItem(data, "room"), "id")->valueint;
                 mapRoom[roomId].addPlayer(event.data.fd);
                 mapPlayer[event.data.fd].room_id = roomId;
                 broadcast(epoll_fd);
                 return 3;
-            }
+            };
+            case 4: {
+                int list[3];
+                player *host = &mapPlayer[event.data.fd];
+                host->playing = 1;
+                list[0] = event.data.fd;
+                mapPlayer[mapRoom[host->room_id].getPlayer2()].playing = 1;
+                list[1] = mapRoom[host->room_id].getPlayer2();
+                mapPlayer[mapRoom[host->room_id].getPlayer3()].playing = 1;
+                list[2] = mapRoom[host->room_id].getPlayer3();
 
+                for (int j = 0; j < 3; ++j) {
+                    epoll_event newEvent;
+                    newEvent.events = EPOLLOUT;        //表示对应的文件描述符可写（包括对端SOCKET正常关闭）
+                    newEvent.data.fd = list[i];//将connFd设置为要读取的文件描述符
+                    mapPlayer[list[i]].event = 2;
+                    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, list[i], &newEvent) == -1) {
+                        perror("epoll_ctl:conn_fd register failed");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                return 4;
+            }
             default:
                 return 0;
         }
@@ -62,6 +84,9 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
 
 void broadcast(int epoll_fd) {
     for (map<int, player>::iterator iter = mapPlayer.begin(); iter != mapPlayer.end(); iter++) {
+        if (iter->second.playing == 1) {
+            continue;
+        }
         epoll_event newEvent;
         newEvent.events = EPOLLOUT;        //表示对应的文件描述符可写（包括对端SOCKET正常关闭）
         newEvent.data.fd = iter->first;//将connFd设置为要读取的文件描述符
@@ -174,14 +199,27 @@ int main() {
                         cJSON_AddNumberToObject(r, "id", iter->first);
                         cJSON_AddNumberToObject(r, "amount", iter->second.getConnectAmount());
                         cJSON_AddStringToObject(r, "name", iter->second.getName().c_str());
-			cJSON_AddNumberToObject(r,"host",iter->second.getHost());
-			cJSON_AddNumberToObject(r,"player2",iter->second.getPlayer2());
-			cJSON_AddNumberToObject(r,"player3",iter->second.getPlayer3());
+                        cJSON_AddNumberToObject(r, "host", iter->second.getHost());
+                        cJSON_AddNumberToObject(r, "player2", iter->second.getPlayer2());
+                        cJSON_AddNumberToObject(r, "player3", iter->second.getPlayer3());
 
                         cJSON_AddItemToArray(data, r);
                     }
                     cJSON_AddItemToObject(response, "data", data);
 
+                    send_msg(events[i].data.fd, cJSON_PrintUnformatted(response));
+
+                    mapPlayer[events[i].data.fd].event = -1;
+                    event.events = EPOLLIN;        //表示对应的文件描述符可读（包括对端SOCKET正常关闭）
+                    event.data.fd = events[i].data.fd;//将connFd设置为要读取的文件描述符
+                    //event.data.ptr = &head;
+                    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1) {
+                        perror("epoll_ctl:conn_fd register failed");
+                        exit(EXIT_FAILURE);
+                    }
+                } else if (mapPlayer[events[i].data.fd].event == 2) {
+                    cJSON_AddNumberToObject(response, "function", 2);
+                    cJSON_AddNumberToObject(response, "type", 1);
                     send_msg(events[i].data.fd, cJSON_PrintUnformatted(response));
 
                     mapPlayer[events[i].data.fd].event = -1;

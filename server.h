@@ -16,7 +16,8 @@ using namespace std;
 
 struct player {
     int room_id = -1;
-    int event = -1;//1表示房间请求
+    int event = -1;//1表示房间请求;2表示开始
+    int playing = 0;
 };
 
 void broadcast(int epoll_fd);
