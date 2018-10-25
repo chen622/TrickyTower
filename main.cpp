@@ -88,20 +88,20 @@ void roomcast(int epoll_fd, int socketFd, int eventId,cJSON *data) {
         size = 2;
         if (currentRoom.getHost() == socketFd){
             list[0] = currentRoom.getPlayer2();
-            mapPlayer[socketFd].msg1 = cJSON_GetObjectItem(data, "bodies");
+            mapPlayer[list[0]].msg1 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer3();
-            mapPlayer[socketFd].msg1 = cJSON_GetObjectItem(data, "bodies");
+            mapPlayer[list[0]].msg1 = cJSON_GetObjectItem(data, "bodies");
         }else if (currentRoom.getPlayer2() == socketFd){
             list[0] = currentRoom.getHost();
-            mapPlayer[socketFd].msg1 = cJSON_GetObjectItem(data, "bodies");
+            mapPlayer[list[0]].msg1 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer3();
-            mapPlayer[socketFd].msg2 = cJSON_GetObjectItem(data, "bodies");
+            mapPlayer[list[1]].msg2 = cJSON_GetObjectItem(data, "bodies");
 
         }else if (currentRoom.getPlayer3() == socketFd){
             list[0] = currentRoom.getHost();
-            mapPlayer[socketFd].msg2 = cJSON_GetObjectItem(data, "bodies");
+            mapPlayer[list[1]].msg2 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer2();
-            mapPlayer[socketFd].msg2 = cJSON_GetObjectItem(data, "bodies");
+            mapPlayer[list[1]].msg2 = cJSON_GetObjectItem(data, "bodies");
         }
     }
 
