@@ -9,7 +9,11 @@ int roomId = 60;
 
 /*
  * Request json:{
- *      function: //1:创建房间，2:获取房间
+ *      function: //1:创建房间; 2:获取房间; 3:加入房间
+ *      room:{
+ *          id:
+ *          name:
+ *      }
  * }
  */
 int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
@@ -25,7 +29,6 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
 //                if (mapPlayer[event.data.fd].room_id==-1){
 //                    cJSON_AddNumberToObject(response)
 //                }
-                printf("socket:%d\n", event.data.fd);
                 string name = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(data, "room"), "name"));
                 room new_room(name, event.data.fd);
                 printf("1\n");
@@ -40,6 +43,13 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
             };
             case 2: {
                 broadcast(epoll_fd);
+            };
+            case 3:{
+                int roomId = cJSON_GetObjectItem(cJSON_GetObjectItem(data,"room"),"id")->valueint;
+                mapRoom[roomId].addPlayer(event.data.fd);
+                mapPlayer[event.data.fd].room_id = roomId;
+                broadcast(epoll_fd);
+                return 3;
             }
 
             default:
