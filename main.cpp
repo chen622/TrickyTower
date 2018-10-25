@@ -88,19 +88,30 @@ void roomcast(int epoll_fd, int socketFd, int eventId,cJSON *data) {
         size = 2;
         if (currentRoom.getHost() == socketFd){
             list[0] = currentRoom.getPlayer2();
+            if (mapPlayer[list[0]].msg1!=NULL)
+                printf("1\n");
             mapPlayer[list[0]].msg1 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer3();
-            mapPlayer[list[0]].msg1 = cJSON_GetObjectItem(data, "bodies");
+            if (mapPlayer[list[1]].msg1!=NULL)
+                printf("2\n");
+            mapPlayer[list[1]].msg1 = cJSON_GetObjectItem(data, "bodies");
         }else if (currentRoom.getPlayer2() == socketFd){
             list[0] = currentRoom.getHost();
+            if (mapPlayer[list[0]].msg1!=NULL)
+                printf("3\n");
             mapPlayer[list[0]].msg1 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer3();
+            if (mapPlayer[list[1]].msg2!=NULL)
+                printf("4\n");
             mapPlayer[list[1]].msg2 = cJSON_GetObjectItem(data, "bodies");
-
         }else if (currentRoom.getPlayer3() == socketFd){
             list[0] = currentRoom.getHost();
-            mapPlayer[list[1]].msg2 = cJSON_GetObjectItem(data, "bodies");
+            if (mapPlayer[list[0]].msg2!=NULL)
+                printf("5\n");
+            mapPlayer[list[0]].msg2 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer2();
+            if (mapPlayer[list[1]].msg2!=NULL)
+                printf("6\n");
             mapPlayer[list[1]].msg2 = cJSON_GetObjectItem(data, "bodies");
         }
     }
