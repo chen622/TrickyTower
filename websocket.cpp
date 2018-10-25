@@ -18,26 +18,26 @@ int send_msg(int fd,char *str){
 int passive_server(int port, int queue) {
     ///定义sockfd
     int server_sockfd = socket(PF_INET, SOCK_STREAM, 0);
-    struct hostent *hp;/*this is part of our*/
-    struct in_addr *hipaddr;
+//    struct hostent *hp;/*this is part of our*/
+//    struct in_addr *hipaddr;
 
     ///定义sockaddr_in
     struct sockaddr_in server_sockaddr;
-//    server_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	printf("1\n");
-    bzero((void *) &server_sockaddr, sizeof(server_sockaddr));/*clear out struct*/
-	printf("2\n");
-    if(!inet_aton("192.168.43.135",hipaddr)){
-        perror("ip change failed!\n");
-        return -1;
-    }
-    printf("3\n");
-    hp = gethostbyaddr(hipaddr,4,AF_INET);
-	printf("3.5\n");
-    /*fill in host part*/
-    bcopy((void *) hp->h_addr, (void *) &server_sockaddr.sin_addr, hp->h_length);
-	printf("4\n");
+//	  printf("1\n");
+//    bzero((void *) &server_sockaddr, sizeof(server_sockaddr));/*clear out struct*/
+//    printf("2\n");
+//    if(!inet_aton("192.168.43.135",hipaddr)){
+//        perror("ip change failed!\n");
+//        return -1;
+//    }
+//    printf("3\n");
+//    hp = gethostbyaddr(hipaddr,4,AF_INET);
+//    printf("3.5\n");
+//    /*fill in host part*/
+//    bcopy((void *) hp->h_addr, (void *) &server_sockaddr.sin_addr, hp->h_length);
+//    printf("4\n");
 
+    server_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_sockaddr.sin_family = AF_INET;
     server_sockaddr.sin_port = htons(port);
     ///bind，成功返回0，出错返回-1
