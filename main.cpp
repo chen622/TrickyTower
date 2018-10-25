@@ -33,6 +33,7 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
                 room new_room(name, event.data.fd);
                 printf("1\n");
                 mapRoom[roomId] = new_room;
+		mapPlayer[event.data.fd].room_id = roomId;
                 cJSON_AddNumberToObject(response, "function", 1);
                 cJSON_AddNumberToObject(response, "type", 1);
                 cJSON_AddNumberToObject(response, "roomId", roomId);
@@ -61,9 +62,6 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
 
 void broadcast(int epoll_fd) {
     for (map<int, player>::iterator iter = mapPlayer.begin(); iter != mapPlayer.end(); iter++) {
-        if (iter->second.room_id != -1) {
-            continue;
-        }
         epoll_event newEvent;
         newEvent.events = EPOLLOUT;        //表示对应的文件描述符可写（包括对端SOCKET正常关闭）
         newEvent.data.fd = iter->first;//将connFd设置为要读取的文件描述符
