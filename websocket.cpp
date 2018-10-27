@@ -8,9 +8,15 @@
 int send_msg(int fd,char *str){
     frame_head head;
     head.payload_length = strlen(str);
-    send_frame_head(fd, &head);
+    if(send_frame_head(fd, &head)==-1){
+        perror("socket error");
+        exit(-1);
+    }
     //printf("send data(%d):%s\n",head.payload_length,str);
-    write(fd, str, strlen(str));
+    if(write(fd, str, strlen(str))){
+        perror("socket error");
+        return -1;
+    }
 }
 
 
@@ -202,8 +208,6 @@ int recv_frame_head(int fd, frame_head *head) {
 }
 
 /**
- * @brief umask
- * xor decode
  * @param data 传过来时为密文，解码后的明文同样存储在这里
  * @param len data的长度
  * @param mask 掩码
@@ -239,7 +243,7 @@ int send_frame_head(int fd, frame_head *head) {
     }
 
     if (write(fd, response_head, head_length) <= 0) {
-        perror("write head");
+        perror("socket error");
         return -1;
     }
 
