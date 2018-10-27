@@ -13,7 +13,7 @@ int send_msg(int fd,char *str){
         exit(-1);
     }
     //printf("send data(%d):%s\n",head.payload_length,str);
-    if(write(fd, str, strlen(str))){
+    if(write(fd, str, strlen(str))<=0){
         perror("socket error");
         return -1;
     }
