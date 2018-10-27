@@ -149,6 +149,7 @@ void broadcast(int epoll_fd) {
 }
 
 void deleteFromEpoll(int epoll_fd, int socketFd) {
+	printf("write:end of socket:%d\n",socketFd);
     int roomId = mapPlayer[socketFd].room_id;
     if (roomId != -1) {
         room *current = &mapRoom[roomId];
@@ -165,10 +166,6 @@ void deleteFromEpoll(int epoll_fd, int socketFd) {
     mapPlayer.erase(socketFd);
     broadcast(epoll_fd);
     close(socketFd);
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socketFd, NULL) == -1) {
-        perror("epoll_ctl:conn_fd delete failed");
-        exit(EXIT_FAILURE);
-    }
 }
 
 int main() {
