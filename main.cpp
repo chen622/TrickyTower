@@ -35,7 +35,6 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
 //                }
                 string name = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(data, "room"), "name"));
                 room new_room(name, event.data.fd);
-                printf("1\n");
                 mapRoom[roomId] = new_room;
                 mapPlayer[event.data.fd].room_id = roomId;
                 cJSON_AddNumberToObject(response, "function", 1);
@@ -93,34 +92,28 @@ void roomcast(int epoll_fd, int socketFd, int eventId, cJSON *data) {
         if (currentRoom.getHost() == socketFd) {
             list[0] = currentRoom.getPlayer2();
             if (mapPlayer[list[0]].msg1 != NULL)
-                printf("1\n");
             mapPlayer[list[0]].msg1 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer3();
             if (mapPlayer[list[1]].msg1 != NULL)
-                printf("2\n");
             mapPlayer[list[1]].msg1 = cJSON_GetObjectItem(data, "bodies");
         } else if (currentRoom.getPlayer2() == socketFd) {
             list[0] = currentRoom.getHost();
             if (mapPlayer[list[0]].msg1 != NULL)
-                printf("3\n");
             mapPlayer[list[0]].msg1 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer3();
             if (mapPlayer[list[1]].msg2 != NULL)
-                printf("4\n");
             mapPlayer[list[1]].msg2 = cJSON_GetObjectItem(data, "bodies");
         } else if (currentRoom.getPlayer3() == socketFd) {
             list[0] = currentRoom.getHost();
             if (mapPlayer[list[0]].msg2 != NULL)
-                printf("5\n");
             mapPlayer[list[0]].msg2 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer2();
             if (mapPlayer[list[1]].msg2 != NULL)
-                printf("6\n");
             mapPlayer[list[1]].msg2 = cJSON_GetObjectItem(data, "bodies");
         }
     }
 
-    printf("player:%d,%d,%d\n", list[0], list[1], list[2]);
+    printf("player:%d,%d\n", list[0], list[1]);
     for (int j = 0; j < size; ++j) {
         epoll_event newEvent;
         newEvent.events = EPOLLOUT;//表示对应的文件描述符可写（包括对端SOCKET正常关闭）
@@ -226,7 +219,7 @@ int main() {
                     exit(EXIT_FAILURE);
                 }
             } else if (events[i].events & EPOLLIN) {
-                printf("receive\n");
+                printf("receive %d\n",events[i].data.fd);
                 frame_head head;
                 int rul = recv_frame_head(events[i].data.fd, &head);
                 if (rul < 0) {
@@ -254,11 +247,11 @@ int main() {
                     printf("socket %d close\n", events[i].data.fd, payload_data, 1024);
                     deleteFromEpoll(epoll_fd, events[i].data.fd);
                 }
-                //printf("receive data(%d):%s\n", head.payload_length, payload_data);
+                printf("receive data(%d)\n", head.payload_length);
                 processRequest(payload_data, events[i], epoll_fd, i);
 
             } else {
-                printf("write\n");
+                printf("write %d\n",events[i].data.fd);
                 cJSON *response = cJSON_CreateObject();
 
                 if (mapPlayer[events[i].data.fd].event == 1) {//广播所有房间
