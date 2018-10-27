@@ -24,5 +24,6 @@ struct player {
 
 void broadcast(int epoll_fd);
 void roomcast(int epoll_fd,int socketFd,int eventId,cJSON *data);
+void deleteFromEpoll(int epoll_fd,int socketFd);
 
 #endif //WEBSOCKET_SERVER_H

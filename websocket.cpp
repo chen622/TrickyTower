@@ -5,20 +5,21 @@
 #include <netdb.h>
 #include "websocket.h"
 
-int send_msg(int fd,char *str){
+int send_msg(int fd, char *str) {
     frame_head head;
     head.payload_length = strlen(str);
-    if(send_frame_head(fd, &head)==-1){
-        perror("socket error");
-        exit(-1);
-    }
-    //printf("send data(%d):%s\n",head.payload_length,str);
-    if(write(fd, str, strlen(str))<=0){
+    int r;
+    if (send_frame_head(fd, &head) == -1) {
         perror("socket error");
         return -1;
     }
+    //printf("send data(%d):%s\n",head.payload_length,str);
+    if ((r = write(fd, str, strlen(str))) <= 0) {
+        perror("socket error");
+        return -1;
+    }
+    return r;
 }
-
 
 
 int passive_server(int port, int queue) {
