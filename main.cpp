@@ -1,3 +1,4 @@
+#include <csignal>
 #include "server.h"
 
 
@@ -186,6 +187,8 @@ int main() {
     struct epoll_event events[MAX_EVENTS];
     event.events = EPOLLIN;
     event.data.fd = listen_fd;
+
+    signal(SIGPIPE,SIG_IGN);
 
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fd, &event) == -1)    //注册新的listen_fd到epoll_fd中
     {
