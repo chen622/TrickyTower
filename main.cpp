@@ -91,24 +91,23 @@ void roomcast(int epoll_fd, int socketFd, int eventId, cJSON *data) {
         size = 2;
         if (currentRoom.getHost() == socketFd) {
             list[0] = currentRoom.getPlayer2();
-            if (mapPlayer[list[0]].msg1 != NULL)
+            //if (mapPlayer[list[0]].msg1 != NULL)
             mapPlayer[list[0]].msg1 = cJSON_GetObjectItem(data, "bodies");
-            list[1] = currentRoom.getPlayer3();
-            if (mapPlayer[list[1]].msg1 != NULL)
+            //list[1] = currentRoom.getPlayer3();
             mapPlayer[list[1]].msg1 = cJSON_GetObjectItem(data, "bodies");
         } else if (currentRoom.getPlayer2() == socketFd) {
             list[0] = currentRoom.getHost();
-            if (mapPlayer[list[0]].msg1 != NULL)
+            //if (mapPlayer[list[0]].msg1 != NULL)
             mapPlayer[list[0]].msg1 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer3();
-            if (mapPlayer[list[1]].msg2 != NULL)
+            //if (mapPlayer[list[1]].msg2 != NULL)
             mapPlayer[list[1]].msg2 = cJSON_GetObjectItem(data, "bodies");
         } else if (currentRoom.getPlayer3() == socketFd) {
             list[0] = currentRoom.getHost();
-            if (mapPlayer[list[0]].msg2 != NULL)
+            //if (mapPlayer[list[0]].msg2 != NULL)
             mapPlayer[list[0]].msg2 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer2();
-            if (mapPlayer[list[1]].msg2 != NULL)
+            //if (mapPlayer[list[1]].msg2 != NULL)
             mapPlayer[list[1]].msg2 = cJSON_GetObjectItem(data, "bodies");
         }
     }
@@ -143,7 +142,7 @@ void broadcast(int epoll_fd) {
 }
 
 void deleteFromEpoll(int epoll_fd, int socketFd) {
-	printf("write:end of socket:%d\n",socketFd);
+    printf("write:end of socket:%d\n", socketFd);
     int roomId = mapPlayer[socketFd].room_id;
     if (roomId != -1) {
         room *current = &mapRoom[roomId];
@@ -181,7 +180,7 @@ int main() {
     event.events = EPOLLIN;
     event.data.fd = listen_fd;
 
-    signal(SIGPIPE,SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
 
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fd, &event) == -1)    //注册新的listen_fd到epoll_fd中
     {
@@ -219,7 +218,7 @@ int main() {
                     exit(EXIT_FAILURE);
                 }
             } else if (events[i].events & EPOLLIN) {
-                printf("receive %d\n",events[i].data.fd);
+                printf("receive %d\n", events[i].data.fd);
                 frame_head head;
                 int rul = recv_frame_head(events[i].data.fd, &head);
                 if (rul < 0) {
@@ -251,7 +250,7 @@ int main() {
                 processRequest(payload_data, events[i], epoll_fd, i);
 
             } else {
-                printf("write %d\n",events[i].data.fd);
+                printf("write %d\n", events[i].data.fd);
                 cJSON *response = cJSON_CreateObject();
 
                 if (mapPlayer[events[i].data.fd].event == 1) {//广播所有房间
