@@ -241,7 +241,7 @@ int main() {
                     broadcast(epoll_fd);
                     close(events[i].data.fd);
                 }
-                printf("receive data(%d):%s\n", head.payload_length, payload_data);
+                //printf("receive data(%d):%s\n", head.payload_length, payload_data);
                 processRequest(payload_data, events[i], epoll_fd, i);
 
             } else {
