@@ -254,6 +254,12 @@ int main() {
                     cJSON_AddNumberToObject(response, "socketId", events[i].data.fd);
                     cJSON *data = cJSON_CreateArray();
                     for (map<int, room>::iterator iter = mapRoom.begin(); iter != mapRoom.end(); iter++) {
+                        while (iter->second.getConnectAmount()==0){
+                            iter = mapRoom.erase(iter);
+                            if (iter == mapRoom.end()){
+                                break;
+                            }
+                        }
                         cJSON *r = cJSON_CreateObject();
                         cJSON_AddNumberToObject(r, "id", iter->first);
                         cJSON_AddNumberToObject(r, "amount", iter->second.getConnectAmount());
