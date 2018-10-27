@@ -20,7 +20,7 @@ int roomId = 60;
  */
 int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
     printf("process\n");
-	cJSON *data = cJSON_Parse(request);
+    cJSON *data = cJSON_Parse(request);
     cJSON *response = cJSON_CreateObject();
     if (!data) {
         printf("Error before:[%s]\n", cJSON_GetErrorPtr());
@@ -57,11 +57,11 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
                 return 3;
             };
             case 4: {
-                roomcast(epoll_fd, event.data.fd, 2,data);
+                roomcast(epoll_fd, event.data.fd, 2, data);
                 return 4;
             };
             case 5: {
-                roomcast(epoll_fd, event.data.fd, 3,data);
+                roomcast(epoll_fd, event.data.fd, 3, data);
                 return 5;
             }
             default:
@@ -71,7 +71,7 @@ int processRequest(char *request, epoll_event event, int epoll_fd, int i) {
     return -1;
 }
 
-void roomcast(int epoll_fd, int socketFd, int eventId,cJSON *data) {
+void roomcast(int epoll_fd, int socketFd, int eventId, cJSON *data) {
     int list[3];
     int size = 0;
     if (eventId == 2) {
@@ -86,31 +86,31 @@ void roomcast(int epoll_fd, int socketFd, int eventId,cJSON *data) {
     } else {
         room currentRoom = mapRoom[mapPlayer[socketFd].room_id];
         size = 2;
-        if (currentRoom.getHost() == socketFd){
+        if (currentRoom.getHost() == socketFd) {
             list[0] = currentRoom.getPlayer2();
-            if (mapPlayer[list[0]].msg1!=NULL)
+            if (mapPlayer[list[0]].msg1 != NULL)
                 printf("1\n");
             mapPlayer[list[0]].msg1 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer3();
-            if (mapPlayer[list[1]].msg1!=NULL)
+            if (mapPlayer[list[1]].msg1 != NULL)
                 printf("2\n");
             mapPlayer[list[1]].msg1 = cJSON_GetObjectItem(data, "bodies");
-        }else if (currentRoom.getPlayer2() == socketFd){
+        } else if (currentRoom.getPlayer2() == socketFd) {
             list[0] = currentRoom.getHost();
-            if (mapPlayer[list[0]].msg1!=NULL)
+            if (mapPlayer[list[0]].msg1 != NULL)
                 printf("3\n");
             mapPlayer[list[0]].msg1 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer3();
-            if (mapPlayer[list[1]].msg2!=NULL)
+            if (mapPlayer[list[1]].msg2 != NULL)
                 printf("4\n");
             mapPlayer[list[1]].msg2 = cJSON_GetObjectItem(data, "bodies");
-        }else if (currentRoom.getPlayer3() == socketFd){
+        } else if (currentRoom.getPlayer3() == socketFd) {
             list[0] = currentRoom.getHost();
-            if (mapPlayer[list[0]].msg2!=NULL)
+            if (mapPlayer[list[0]].msg2 != NULL)
                 printf("5\n");
             mapPlayer[list[0]].msg2 = cJSON_GetObjectItem(data, "bodies");
             list[1] = currentRoom.getPlayer2();
-            if (mapPlayer[list[1]].msg2!=NULL)
+            if (mapPlayer[list[1]].msg2 != NULL)
                 printf("6\n");
             mapPlayer[list[1]].msg2 = cJSON_GetObjectItem(data, "bodies");
         }
@@ -226,7 +226,19 @@ int main() {
                 } while (size < head.payload_length);
                 if (head.opcode == 0x8) {
                     printf("socket %d close\n", events[i].data.fd, payload_data, 1024);
+                    int roomId = mapPlayer[events[i].data.fd].room_id;
+                    if (roomId != -1) {
+                        room *current = &mapRoom[roomId];
+                        if(current->getHost()==events[i].data.fd){
+                            mapRoom.erase(roomId);
+                        }else if(current->getPlayer2()==events[i].data.fd){
+                            current->setPlayer2(-1);
+                        }else if (current->getPlayer3()==events[i].data.fd){
+                            current->setPlayer3(-1);
+                        }
+                    }
                     mapPlayer.erase(events[i].data.fd);
+                    broadcast(epoll_fd);
                     close(events[i].data.fd);
                 }
                 printf("receive data(%d):%s\n", head.payload_length, payload_data);
