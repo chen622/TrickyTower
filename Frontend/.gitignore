@@ -1,7 +1,5 @@
-/cmake-build-debug
-*/.idea
 .DS_Store
-*/node_modules
+node_modules
 /dist
 
 # local env files
