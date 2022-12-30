@@ -11,16 +11,16 @@
     "axios": "^0.18.1",
     "circular-json": "^0.5.9",
     "matter-js": "^0.14.2",
-    "sass-loader": "^7.1.0",
+    "sass-loader": "^13.2.0",
     "vue": "^2.5.17",
     "vue-material": "^1.0.0-beta-10.2",
     "vue-router": "^3.0.1",
     "vuex": "^3.0.1"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^3.0.5",
-    "@vue/cli-plugin-eslint": "^3.0.5",
-    "@vue/cli-service": "^3.0.5",
+    "@vue/cli-plugin-babel": "^3.12.1",
+    "@vue/cli-plugin-eslint": "^5.0.8",
+    "@vue/cli-service": "^5.0.8",
     "vue-cli-plugin-scss-base": "^0.1.10",
     "vue-template-compiler": "^2.5.17"
   },
